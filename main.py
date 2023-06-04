@@ -1,3 +1,8 @@
+'''
+⭐ 100 Stars = Hcaptcha AI Solver
+⭐ 300 Stars = Discord Multi Tool
+'''
+
 import tls_client
 import random
 import time
@@ -5,12 +10,13 @@ import string
 import logging
 import os
 import threading
+import json
 
 
-current_time = time.strftime("%H:%M:%S")
 logging.basicConfig(
-    format=f"\033[33m(\033[37m{current_time}\033[33m) \033[37m%(message)s\033[0m", 
-    level=logging.DEBUG
+    format=f"\033[33m(\033[37m%(asctime)s\x1b[38;5;9m\033[33m) \033[37m%(message)s\033[0m", 
+    level=logging.DEBUG,
+    datefmt="%H:%M:%S",
 )
 logging.getLogger("Logger")
 
@@ -27,6 +33,8 @@ class DiscordJoinerPY:
             random_tls_extension_order=True
         )
         self.tokens = []
+        self.proxies = []
+        self.check()
     
 
     def headers(self, token: str):
@@ -52,6 +60,7 @@ class DiscordJoinerPY:
         }
         return headers
     
+
     def get_cookies(self):
         cookies = {}
         try:
@@ -65,32 +74,49 @@ class DiscordJoinerPY:
           logging.info('Failed to obtain cookies ({})'.format(e))
           return cookies
 
-    def accept_invite(self, token: str, invite: str):
+
+    def accept_invite(self, token: str, invite: str, proxy_: str):
         '''
         Simple full HTTP requests discord joiner
         
-        You can bypass "session_id" by adding a random value
+        You can bypass "session_id" by adding a random value (no need to use ws)
         '''
         payload = {
             'session_id': ''.join(random.choice(string.ascii_lowercase) + random.choice(string.digits) for _ in range(16))
         }
+
+        proxy = {
+            "http": "http://{}".format(proxy_),
+            "https": "https://{}".format(proxy_)
+
+        } if proxy_ else None
+
         try:
-          response = self.client.post('https://discord.com/api/v9/invites/{}'.format(invite), headers=self.headers(token=token), json=payload, cookies=self.get_cookies())
+          response = self.client.post(
+             url='https://discord.com/api/v9/invites/{}'.format(invite),
+             headers=self.headers(token=token),
+             json=payload,
+             cookies=self.get_cookies(),
+             proxy=proxy
+          )
           response_json = response.json()
           if response.status_code == 200:
-             logging.info('Joined in {} ({})'.format(token, invite))
+              logging.info('Joined in {} ({})'.format(token, invite))
           elif response.status_code == 401 and response_json['message'] == "401: Unauthorized":
-             logging.info('Token is invalid ({})'.format(token))
+              logging.info('Token is invalid ({})'.format(token))
           elif response.status_code == 403 and response_json['message'] == "You need to verify your account in order to perform this action.":
-             logging.info('Token is locked ({})'.format(token))
-          elif response.status_code == 400 and response_json['captcha_key'] == ["captcha-required"]:
-             logging.info('Captcha detected ({})'.format(token))
+              logging.info('Token is locked ({})'.format(token))
+          elif response.status_code == 400 and response_json['captcha_key'] == ['You need to update your app to join this server.']:
+              logging.info('Captcha detected ({})'.format(token))
+              #self.headers(token=token)['x-captcha-rqtoken'] = response_json['captcha_rqtoken']
+              #self.headers(token=token)['x-captcha-key'] = captcha_token
           elif response_json['message'] == "404: Not Found":
-             logging.info('Unknown invite ({})'.format(invite))
+              logging.info('Unknown invite ({})'.format(invite))
           else:
-             logging.info('Invalid response ({})'.format(response_json))
+              logging.info('Invalid response ({})'.format(response_json))
         except Exception as error:
-           logging.info('Error ({})'.format(error))
+              logging.info('Error ({})'.format(error))
+
 
     def check(self):
         folder_path = "input"
@@ -100,10 +126,14 @@ class DiscordJoinerPY:
             os.makedirs(folder_path)
 
         if not os.path.exists(file_path):
-            with open(file_path, "w") as file:
-                file.write("REMOVE THIS LINE AND INSERT YOUR TOKENS")
+            for file_name in ['proxies.txt', 'tokens.txt']:
+                file_path = os.path.join(folder_path, file_name)
+                if not os.path.exists(file_path):
+                    with open(file_path, "w") as file:
+                        file.write("/// Remove this line")
 
         self.load_tokens()
+
 
     def load_tokens(self):
         try:
@@ -115,22 +145,40 @@ class DiscordJoinerPY:
            self.start()
         except Exception as error:
             logging.info('Error ({})'.format(error))
+    
+
+    def load_proxies(self):
+        try:
+          with open("./input/proxies.txt", "r") as file:
+           for line in file:
+             content = line.replace("\n",  "")
+             self.proxies.append(content)
+
+        except Exception as error:
+            logging.info('Error ({})'.format(error))
+       
 
     def start(self):
+        self.iterator = iter(self.proxies)
+        self.load_proxies()
+
         invite = input("\033[33m(\033[37m{}\033[33m) \033[37mYour invite: ".format(time.strftime("%H:%M:%S")))
+
         for token in self.tokens:
             try:
-                threading.Thread(target=self.accept_invite, args=(token, invite)).start()
+                if self.proxies == [] or self.proxies[0] == "/// Remove this line":
+                   proxy = None
+                else:
+                   proxy = next(self.iterator)
+                   logging.info('Using ({})'.format(proxy))
+
+                threading.Thread(target=self.accept_invite, args=(token, invite, proxy)).start()
+
             except Exception as error:
                 logging.info('Error ({})'.format(error))
                 
              
-        
-
+    
 if __name__ == '__main__':
      # discord: swaps#1337
      joiner = DiscordJoinerPY()
-     joiner.check()
-
-
-     
