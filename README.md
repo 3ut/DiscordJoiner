@@ -32,7 +32,9 @@
 * It only works with unflagged tokens.
 ---------------------------------------
 
-
+### Proxy Usage
+* Format: username:password@hostname:port
+* If you want to use proxies just put them on input/proxies.txt
 
 ### Contact
 [Telegram](https://t.me/swaps1337)
