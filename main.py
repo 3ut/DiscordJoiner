@@ -1,6 +1,5 @@
 '''
 ⭐ 100 Stars = Hcaptcha AI Solver
-⭐ 300 Stars = Discord Multi Tool
 '''
 
 import tls_client
