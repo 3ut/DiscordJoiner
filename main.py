@@ -1,7 +1,3 @@
-'''
-⭐ 100 Stars = Hcaptcha AI Solver
-'''
-
 import tls_client
 import random
 import time
@@ -35,8 +31,8 @@ class DiscordJoinerPY:
         self.proxies = []
         self.check()
     
-
-    def headers(self, token: str):
+    @staticmethod
+    def headers(token: str):
         headers = {
             'authority': 'discord.com',
             'accept': '*/*',
@@ -93,7 +89,7 @@ class DiscordJoinerPY:
         try:
           response = self.client.post(
              url='https://discord.com/api/v9/invites/{}'.format(invite),
-             headers=self.headers(token=token),
+             headers=DiscordJoinerPY.headers(token=token),
              json=payload,
              cookies=self.get_cookies(),
              proxy=proxy
