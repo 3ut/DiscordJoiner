@@ -211,7 +211,7 @@ class DiscordJoinerPY:
               response_json = response.json()
               guild = response_json.get('guild')
               return invite, guild.get('id')
-        except Exception as e:
+        except:
            pass
         
 
@@ -222,7 +222,7 @@ class DiscordJoinerPY:
         invite = input("\033[33m(\033[37m{}\033[33m) \033[37mYour invite: ".format(time.strftime("%H:%M:%S")))
         try:
            invite, guild_id = self.invite_manager(invite=invite)
-        except Exception as e:
+        except:
            pass
         
         for token in self.tokens:
