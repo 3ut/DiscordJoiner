@@ -1,7 +1,5 @@
 <h1 align="center"> DiscordJoinerPY </h1>
 
-<h1 align="center">Status: Undetected (tested with unflagged unclaimed)</h1>
-
 <p align="center">
   <img src="https://img.shields.io/github/contributors/3ut/DiscordJoinerPY.svg?style=for-the-badge"/>
   <img src="https://img.shields.io/github/forks/3ut/DiscordJoinerPY.svg?style=for-the-badge"/>
