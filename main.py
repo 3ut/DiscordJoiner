@@ -2,10 +2,9 @@ import tls_client
 import random
 import time
 import string
-import logging
 import os
 import threading
-import json
+import logging
 
 
 logging.basicConfig(
@@ -32,7 +31,19 @@ class DiscordJoinerPY:
         self.check()
     
     @staticmethod
-    def headers(token: str):
+    def headers(token: str) -> dict:
+        '''
+        Costruisce i parametri di intestazione aggiungendo il token all'interno di 'authorization'.
+
+        Parametri:
+            - token: str, il token da aggiungere all'intestazione.
+
+        Restituisce:
+            Un dizionario contenente i parametri di intestazione con il token aggiunto.
+
+        Esempio:
+            >>> DiscordJoinerPY.headers(token="my_token")
+        '''
         headers = {
             'authority': 'discord.com',
             'accept': '*/*',
@@ -57,6 +68,12 @@ class DiscordJoinerPY:
     
 
     def get_cookies(self):
+        '''
+        Recupera i cookie dal client di Discord.
+
+        Restituisce:
+            Un dizionario contenente i cookies.
+        '''
         cookies = {}
         try:
           response = self.client.get('https://discord.com')
@@ -66,11 +83,39 @@ class DiscordJoinerPY:
           return cookies
         
         except Exception as e:
-          logging.info('Failed to obtain cookies ({})'.format(e))
           return cookies
+    
+    
+    def bypass_form(self, token: str, invite: str, guild_id: str):
+        headers = DiscordJoinerPY.headers(token=token)
+        params = {
+            'with_guild': 'false',
+            'invite_code': invite,
+        }
 
+        verification_url = f'https://discord.com/api/v9/guilds/{guild_id}/member-verification'
+        verification_response = self.client.get(url=verification_url, params=params, headers=headers)
+        
+        if verification_response.status_code == 200:
+            verification_data = verification_response.json()
+            put_url = f'https://discord.com/api/v9/guilds/{guild_id}/requests/@me'
+            put_response = self.client.put(url=put_url, headers=headers, json=verification_data)
+            
+            if put_response.status_code == 201:
+                logging.info(f'Bypassed screen verification ({guild_id})')
+            else:
+                logging.info(f'Failed to bypass screen verification ({guild_id})')
+        else:
+            logging.info(f'Failed to find server screen verification ({guild_id})')
 
-    def accept_invite(self, token: str, invite: str, proxy_: str):
+    def check_verification(self, token: str, invite: str, response, guild_id: str):
+        if response.get("show_verification_form") == True:
+            try:
+              self.bypass_form(token=token, invite=invite, guild_id=guild_id)
+            except:
+               pass
+
+    def accept_invite(self, token: str, invite: str, proxy_: str, guild_id: str):
         '''
         Simple full HTTP requests discord joiner
         
@@ -97,6 +142,7 @@ class DiscordJoinerPY:
           response_json = response.json()
           if response.status_code == 200:
               logging.info('Joined in {} ({})'.format(token, invite))
+              self.check_verification(token=token, invite=invite,response=response_json, guild_id=guild_id)
           elif response.status_code == 401 and response_json['message'] == "401: Unauthorized":
               logging.info('Token is invalid ({})'.format(token))
           elif response.status_code == 403 and response_json['message'] == "You need to verify your account in order to perform this action.":
@@ -126,8 +172,10 @@ class DiscordJoinerPY:
                 if not os.path.exists(file_path):
                     with open(file_path, "w") as file:
                         file.write("/// Remove this line")
-
-        self.load_tokens()
+        try:
+           self.load_tokens()
+        except:
+           pass
 
 
     def load_tokens(self):
@@ -153,12 +201,30 @@ class DiscordJoinerPY:
             logging.info('Error ({})'.format(error))
        
 
+    def invite_manager(self, invite: str):
+        if 'discord.gg' in invite or 'discord.com' in invite:
+           invite = invite.replace('https://discord.com/invite/', '').replace('https://discord.gg/', '').replace('discord.gg/', '')
+
+        try:
+           response = self.client.get(f'https://discord.com/api/v9/invites/{invite}?inputValue{invite}&with_counts=true&with_expiration=true')
+           if response.status_code == 200:
+              response_json = response.json()
+              guild = response_json.get('guild')
+              return invite, guild.get('id')
+        except Exception as e:
+           pass
+        
+
     def start(self):
         self.iterator = iter(self.proxies)
         self.load_proxies()
 
         invite = input("\033[33m(\033[37m{}\033[33m) \033[37mYour invite: ".format(time.strftime("%H:%M:%S")))
-
+        try:
+           invite, guild_id = self.invite_manager(invite=invite)
+        except Exception as e:
+           pass
+        
         for token in self.tokens:
             try:
                 if self.proxies == [] or self.proxies[0] == "/// Remove this line":
@@ -167,7 +233,7 @@ class DiscordJoinerPY:
                    proxy = next(self.iterator)
                    logging.info('Using ({})'.format(proxy))
 
-                threading.Thread(target=self.accept_invite, args=(token, invite, proxy)).start()
+                threading.Thread(target=self.accept_invite, args=(token, invite, proxy, guild_id)).start()
 
             except Exception as error:
                 logging.info('Error ({})'.format(error))
@@ -175,5 +241,5 @@ class DiscordJoinerPY:
              
     
 if __name__ == '__main__':
-     # discord: swaps#1337
+     # discord: swaps1337
      joiner = DiscordJoinerPY()
