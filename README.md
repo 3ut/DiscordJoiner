@@ -35,10 +35,8 @@
 ### Proxy Usage
 * Format: username:password@hostname:port
 * If you want to use proxies just put them on input/proxies.txt
+---------------------------------------
 
-### Contact
-[Telegram](https://t.me/swaps1337)
-<br/>
-[Discord](https://discord.com/users/1091409048336859287)
-<br/>
-[ReadME](https://github.com/dropout1337)
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=swapsdev/DiscordJoinerPY&type=Date)](https://star-history.com/#swapsdev/DiscordJoinerPY&Date)
