@@ -39,4 +39,4 @@
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=swapsdev/DiscordJoinerPY&type=Date)](https://star-history.com/#swapsdev/DiscordJoinerPY&Date)
+[[![Star History Chart](https://api.star-history.com/svg?repos=swapsdev/DiscordJoinerPY&type=Date)](https://star-history.com/#swapsdev/DiscordJoinerPY&Date)](https://star-history.com/#3ut/DiscordJoinerPY&Date)https://star-history.com/#3ut/DiscordJoinerPY&Date
