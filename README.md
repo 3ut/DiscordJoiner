@@ -1,5 +1,7 @@
 <h1 align="center"> DiscordJoinerPY </h1>
 
+<h1 align="center">Status: Undetected (tested with unflagged unclaimed)</h1>
+
 <p align="center">
   <img src="https://img.shields.io/github/contributors/3ut/DiscordJoinerPY.svg?style=for-the-badge"/>
   <img src="https://img.shields.io/github/forks/3ut/DiscordJoinerPY.svg?style=for-the-badge"/>
@@ -35,8 +37,10 @@
 ### Proxy Usage
 * Format: username:password@hostname:port
 * If you want to use proxies just put them on input/proxies.txt
----------------------------------------
 
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=3ut/DiscordJoinerPY&type=Date)](https://star-history.com/#3ut/DiscordJoinerPY&Date)
+### Contact
+[Telegram](https://t.me/swaps1337)
+<br/>
+[Discord](https://discord.com/users/1091409048336859287)
+<br/>
+[ReadME](https://github.com/dropout1337)
