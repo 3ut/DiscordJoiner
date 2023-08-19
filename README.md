@@ -9,14 +9,15 @@
 </p>
 
 ---------------------------------------
-  
+
 <br/>
 <div align="center">
   <a href="https://github.com/3ut/DiscordJoinerPY">
-    <img src="https://cdn.discordapp.com/attachments/1113486198321729559/1114072829248409620/pngwing.com_1.png" alt="Logo" width="120" height="120">
+    <img src="https://github.com/3ut/DiscordJoinerPY/assets/84240761/5f5f8e3e-29ff-4937-a65a-62fb3cfe8eca" alt="Logo" width="520" height="90">
   </a>
 
   <p align="center">
+    <br />
     A simple and fast mass tokens joiner made in 10m, undetected!
     <br />
     <br />
