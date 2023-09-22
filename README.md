@@ -40,6 +40,6 @@
 ### Contact
 [Telegram](https://t.me/swaps1337)
 <br/>
-[Discord](https://discord.com/users/272529789523329025)
+[Discord](https://discord.com/users/1140945396282171412)
 <br/>
 [ReadME](https://github.com/dropout1337)
