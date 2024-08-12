@@ -7,14 +7,7 @@ import logging
 
 from utils.log import Logger
 
-
 class DiscordJoinerPY:
-    '''
-    We love discord!!!
-
-    This is the main class used by DiscordJoinerPY, an open-source tool.
-    '''
-
     def __init__(self):
         self.client = tls_client.Session(
             client_identifier="chrome112",
@@ -27,19 +20,7 @@ class DiscordJoinerPY:
 
     @staticmethod
     def headers(token: str) -> dict:
-        '''
-        Costruisce i parametri di intestazione aggiungendo il token all'interno di 'authorization'.
-
-        Parametri:
-            - token: str, il token da aggiungere all'intestazione.
-
-        Restituisce:
-            Un dizionario contenente i parametri di intestazione con il token aggiunto.
-
-        Esempio:
-            >>> DiscordJoinerPY.headers(token="my_token")
-        '''
-        headers = {
+        return {
             'authority': 'discord.com',
             'accept': '*/*',
             'accept-language': 'it-IT,it;q=0.9,en-US;q=0.8,en;q=0.7',
@@ -59,25 +40,14 @@ class DiscordJoinerPY:
             'x-discord-locale': 'en-GB',
             'x-super-properties': 'eyJvcyI6IldpbmRvd3MiLCJicm93c2VyIjoiQ2hyb21lIiwiZGV2aWNlIjoiIiwic3lzdGVtX2xvY2FsZSI6Iml0LUlUIiwiYnJvd3Nlcl91c2VyX2FnZW50IjoiTW96aWxsYS81LjAgKFdpbmRvd3MgTlQgMTAuMDsgV2luNjQ7IHg2NCkgQXBwbGVXZWJLaXQvNTM3LjM2IChLSFRNTCwgbGlrZSBHZWNrbykgQ2hyb21lLzExMi4wLjAuMCBTYWZhcmkvNTM3LjM2IiwiYnJvd3Nlcl92ZXJzaW9uIjoiMTEyLjAuMC4wIiwib3NfdmVyc2lvbiI6IjEwIiwicmVmZXJyZXIiOiIiLCJyZWZlcnJpbmdfZG9tYWluIjoiIiwicmVmZXJyZXJfY3VycmVudCI6IiIsInJlZmVycmluZ19kb21haW5fY3VycmVudCI6IiIsInJlbGVhc2VfY2hhbm5lbCI6InN0YWJsZSIsImNsaWVudF9idWlsZF9udW1iZXIiOjE5MzkwNiwiY2xpZW50X2V2ZW50X3NvdXJjZSI6bnVsbCwiZGVzaWduX2lkIjowfQ==',
         }
-        return headers
 
     def get_cookies(self):
-        '''
-        Recupera i cookie dal client di Discord.
-
-        Restituisce:
-            Un dizionario contenente i cookies.
-        '''
-        cookies = {}
         try:
             response = self.client.get('https://discord.com')
-            for cookie in response.cookies:
-                cookies[cookie.name] = cookie.value
-            return cookies
-
+            return {cookie.name: cookie.value for cookie in response.cookies}
         except Exception as e:
             self.log.info(f'Failed to obtain discord cookies [{e}]')
-            return cookies
+            return {}
 
     def bypass_form(self, token: str, invite: str, guild_id: str):
         headers = DiscordJoinerPY.headers(token=token)
@@ -95,33 +65,42 @@ class DiscordJoinerPY:
             put_response = self.client.put(url=put_url, headers=headers, json=verification_data)
 
             if put_response.status_code == 201:
-                logging.info(f'Bypassed screen verification ({guild_id})')
+                self.log.info(f'Bypassed screen verification ({guild_id})')
             else:
-                logging.info(f'Failed to bypass screen verification ({guild_id})')
+                self.log.info(f'Failed to bypass screen verification ({guild_id})')
         else:
-            logging.info(f'Failed to find server screen verification ({guild_id})')
+            self.log.info(f'Failed to find server screen verification ({guild_id})')
 
-    def check_verification(self, token: str, invite: str, response, guild_id: str):
-        if response.get("show_verification_form") == True:
+    def check_verification(self, token: str, invite: str, response: dict, guild_id: str):
+        if response.get("show_verification_form"):
             try:
                 self.bypass_form(token=token, invite=invite, guild_id=guild_id)
-            except:
-                pass
+            except Exception as e:
+                self.log.info(f'Error while bypassing form [{e}]')
+
+    def handle_response(self, response, token: str, invite: str):
+        status_code = response.status_code
+        response_json = response.json()
+
+        status_handlers = {
+            200: lambda: self.log.info(f'Joined in {guild_id} [{token}]'),
+            401: lambda: self.log.info(f'Token is invalid [{token}]'),
+            403: lambda: self.log.info(f'Token is locked [{token}]'),
+            400: lambda: self.log.info(f'Captcha detected [{token}]') if response_json.get('captcha_key') == ['You need to update your app to join this server.'] else self.log.info(f'Invalid response [{response_json}]'),
+            404: lambda: self.log.info(f'Unknown invite [{invite}]'),
+        }
+
+        handler = status_handlers.get(status_code, lambda: self.log.info(f'Unexpected response [{response_json}]'))
+        handler()
 
     def accept_invite(self, token: str, invite: str, proxy_: str, guild_id: str):
-        '''
-        Simple full HTTP requests discord joiner
-        
-        You can bypass "session_id" by adding a random value (no need to use ws)
-        '''
         payload = {
-            'session_id': ''.join(random.choice(string.ascii_lowercase) + random.choice(string.digits) for _ in range(16))
+            'session_id': ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(16))
         }
 
         proxy = {
-            "http": "http://{}".format(proxy_),
-            "https": "https://{}".format(proxy_)
-
+            "http": f"http://{proxy_}",
+            "https": f"https://{proxy_}"
         } if proxy_ else None
 
         try:
@@ -132,20 +111,8 @@ class DiscordJoinerPY:
                 cookies=self.get_cookies(),
                 proxy=proxy
             )
-            response_json = response.json()
-            if response.status_code == 200:
-                self.log.info(f'Joined in {guild_id} [{token}]')
-                self.check_verification(token=token, invite=invite, response=response_json, guild_id=guild_id)
-            elif response.status_code == 401 and response_json['message'] == "401: Unauthorized":
-                self.log.info(f'Token is invalid [{token}]')
-            elif response.status_code == 403 and response_json['message'] == "You need to verify your account in order to perform this action.":
-                self.log.info(f'Token is locked [{token}]')
-            elif response.status_code == 400 and response_json['captcha_key'] == ['You need to update your app to join this server.']:
-                self.log.info(f'Captcha detected [{token}]')
-            elif response_json['message'] == "404: Not Found":
-                self.log.info(f'Unknown invite [{invite}]')
-            else:
-                self.log.info(f'Invalid response [{response_json}]')
+            self.handle_response(response, token, invite)
+            self.check_verification(token=token, invite=invite, response=response.json(), guild_id=guild_id)
         except Exception as e:
             self.log.info(f'Error [{e}]')
 
@@ -162,40 +129,28 @@ class DiscordJoinerPY:
                 if not os.path.exists(file_path):
                     with open(file_path, "w") as file:
                         file.write("/// Remove this line")
-        try:
-            self.load_tokens()
-        except:
-            pass
+        self.load_tokens()
 
     def load_tokens(self):
         try:
             with open("./input/tokens.txt", "r") as file:
-                for line in file:
-                    content = line.replace("\n", "")
-                    self.tokens.append(content)
-
-                self.start()
+                self.tokens = [line.strip() for line in file]
+            self.start()
         except Exception as e:
             self.log.info(f'Error [{e}]')
 
     def load_proxies(self):
         try:
             with open("./input/proxies.txt", "r") as file:
-                for line in file:
-                    content = line.replace("\n", "")
-                    self.proxies.append(content)
-
+                self.proxies = [line.strip() for line in file]
         except Exception as e:
             self.log.info(f'Error [{e}]')
 
-    def invite_manager(self, invite: str, proxy_: str):
-        if 'discord.gg' in invite or 'discord.com' in invite:
-            invite = invite.replace('https://discord.com/invite/', '').replace('https://discord.gg/', '').replace(
-                'discord.gg/', '')
+    def invite_manager(self, invite: str) -> tuple:
+        invite = invite.replace('https://discord.com/invite/', '').replace('https://discord.gg/', '').replace('discord.gg/', '')
 
         try:
-            response = self.client.get(
-                f'https://discord.com/api/v9/invites/{invite}?inputValue{invite}&with_counts=true&with_expiration=true')
+            response = self.client.get(f'https://discord.com/api/v9/invites/{invite}?inputValue={invite}&with_counts=true&with_expiration=true')
             if response.status_code == 200:
                 response_json = response.json()
                 guild = response_json.get('guild')
@@ -204,30 +159,22 @@ class DiscordJoinerPY:
                 self.log.info(f'Failed to obtain guild_id [{response.text}]')
                 return '', ''
         except Exception as e:
-                self.log.info(f'Error [{e}]')
+            self.log.info(f'Error [{e}]')
+            return '', ''
 
     def start(self):
-        self.iterator = iter(self.proxies)
         self.load_proxies()
-
         invite = self.log.inpt('Your discord invite: ')
-        try:
-            invite, guild_id = self.invite_manager(invite=invite, proxy_=next(self.iterator))
-            if invite == "":
-                exit(0)
-        except Exception as e:
-            self.log.info(f'Error [{e}]')
+        invite, guild_id = self.invite_manager(invite=invite)
+        
+        if not invite:
+            exit(0)
 
         for token in self.tokens:
             try:
-                if self.proxies == [] or self.proxies[0] == "/// Remove this line":
-                    proxy = None
-                else:
-                    proxy = next(self.iterator)
-                    self.log.info(f'Using [{proxy}]')
-
+                proxy = next(iter(self.proxies), None)
+                self.log.info(f'Using [{proxy}]') if proxy else None
                 threading.Thread(target=self.accept_invite, args=(token, invite, proxy, guild_id)).start()
-
             except Exception as e:
                 self.log.info(f'Error [{e}]')
 
